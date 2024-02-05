@@ -111,7 +111,98 @@ def plot_i_chart(file_path=file_path, sheet_name=sheet_name, col_index=None):
     # Show the control chart
     plt.show()
 
+#Some updates might be required but not at the moment becuase most of our inspections have only 1 subgroup
+def plot_r_chart(file_path=file_path, sheet_name=sheet_name, col_index=None, subgroup_size=None):
+    if col_index is None or subgroup_size is None:
+        raise ValueError("Column index must be provided")
+    if subgroup_size < 2:
+        raise ValueError("Subgroup size must be greater than 1 for range calculation")
+
+    # Read the specified Excel file, sheet, and column
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    data = df.iloc[:, col_index].dropna().values
+
+    # Calculate the ranges of subgroups
+    subgroup_ranges = [np.ptp(data[i:i+subgroup_size]) for i in range(0, len(data), subgroup_size) if i+subgroup_size <= len(data)]
+
+    # Calculate the center line (average range)
+    mean = np.mean(subgroup_ranges)
+
+    # Estimate standard deviation assuming subgroup size is large enough for the approximation to be reasonable
+    d2 = 1.128  # d2 factor for subgroup size of 2; this varies depending on subgroup size
+    std_dev = mean / d2
+
+    # Calculate control limits
+    UCL = mean + 3 * std_dev
+    LCL = max(mean - 3 * std_dev, 0)  # Range can't be negative
+
+    # Set up the control chart
+    subgroup_order = np.arange(1, len(subgroup_ranges) + 1)
+    plt.figure(figsize=(12, 6))
+    plt.plot(subgroup_order, subgroup_ranges, marker='o', linestyle='-', color='#7DA7D9')
+    plt.axhline(mean, color='green', linestyle='-', label=f'R̄={mean:.3f}')
+    plt.axhline(UCL, color='red', linestyle='--', label=f'UCL={UCL:.3f}')
+    plt.axhline(LCL, color='red', linestyle='--', label=f'LCL={LCL:.3f}')
+
+    # Highlight out-of-control points
+    for i, rng in enumerate(subgroup_ranges):
+        if rng > UCL or rng < LCL:
+            plt.plot(subgroup_order[i], rng, marker='o', color='red')
+
+    # Add labels and title
+    plt.xlabel('Subgroup')
+    plt.ylabel('Range')
+    plt.title('R Chart')
+    plt.legend()
+
+    # Show the control chart
+    plt.show()
+
+def plot_s_chart(file_path, sheet_name, col_index, subgroup_size):
+    if col_index is None or subgroup_size is None:
+        raise ValueError("Column index must be provided")
+    if subgroup_size < 9:
+        raise ValueError("Subgroup size must be 9 or greater for an S Chart")
+
+    # Read the specified Excel file, sheet, and column
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
+    data = df.iloc[:, col_index].dropna().values
+
+    # Calculate the standard deviations of subgroups
+    subgroup_stds = [np.std(data[i:i+subgroup_size], ddof=1) for i in range(0, len(data), subgroup_size) if i+subgroup_size <= len(data)]
+
+    # Calculate the center line (average of subgroup standard deviations)
+    Sbar = np.mean(subgroup_stds)
+    # Control limits for S Chart, which are typically set at B3 and B4 constants times Sbar, depending on subgroup size
+    # For subgroup_size >= 9, we can use approximation B3 ≈ 1 and B4 ≈ 1, else consult specific tables for exact values.
+    UCL = Sbar + 3 * Sbar / np.sqrt(subgroup_size)
+    LCL = max(Sbar - 3 * Sbar / np.sqrt(subgroup_size), 0)  # Standard deviation can't be negative
+
+    # Set up the control chart
+    subgroup_order = np.arange(1, len(subgroup_stds) + 1)
+    plt.figure(figsize=(12, 6))
+    plt.plot(subgroup_order, subgroup_stds, marker='o', linestyle='-', color='#7DA7D9')
+    plt.axhline(Sbar, color='green', linestyle='-', label=f'S̄={Sbar:.5f}')
+    plt.axhline(UCL, color='red', linestyle='--', label=f'UCL={UCL:.5f}')
+    plt.axhline(LCL, color='red', linestyle='--', label=f'LCL={LCL:.5f}')
+
+    # Highlight out-of-control points
+    for i, std in enumerate(subgroup_stds):
+        if std > UCL or std < LCL:
+            plt.plot(subgroup_order[i], std, marker='o', color='red')
+
+    # Add labels and title
+    plt.xlabel('Subgroup')
+    plt.ylabel('Standard Deviation')
+    plt.title('S Chart')
+    plt.legend()
+
+    # Show the control chart
+    plt.show()
+
 col_index=4
+subgroup_size = 2
 plot_xbar(col_index=col_index)
 plot_i_chart(col_index=col_index)
 plot_hist(col_index=col_index)
+plot_r_chart(col_index=col_index, subgroup_size=subgroup_size)
