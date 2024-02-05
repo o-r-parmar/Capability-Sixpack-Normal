@@ -158,11 +158,9 @@ def plot_r_chart(file_path=file_path, sheet_name=sheet_name, col_index=None, sub
     # Show the control chart
     plt.show()
 
-def plot_s_chart(file_path, sheet_name, col_index, subgroup_size):
+def plot_s_chart(file_path=file_path, sheet_name=sheet_name, col_index=None, subgroup_size=None):
     if col_index is None or subgroup_size is None:
         raise ValueError("Column index must be provided")
-    if subgroup_size < 9:
-        raise ValueError("Subgroup size must be 9 or greater for an S Chart")
 
     # Read the specified Excel file, sheet, and column
     df = pd.read_excel(file_path, sheet_name=sheet_name)
@@ -200,9 +198,121 @@ def plot_s_chart(file_path, sheet_name, col_index, subgroup_size):
     # Show the control chart
     plt.show()
 
-col_index=4
-subgroup_size = 2
-plot_xbar(col_index=col_index)
-plot_i_chart(col_index=col_index)
+#Updates to be made
+def interpret_s_chart(subgroup_stds, Sbar, UCL, LCL):
+    """
+    Interpret an S chart for special causes.
+
+    Parameters:
+    subgroup_stds (list): List of standard deviations for each subgroup.
+    Sbar (float): Centerline value for standard deviations.
+    UCL (float): Upper Control Limit for standard deviations.
+    LCL (float): Lower Control Limit for standard deviations.
+
+    Returns:
+    list: A list of strings indicating the results of the special cause tests.
+    """
+
+    results = []
+
+    # Test 1: One point more than 3 standard deviations from center line
+    for i, std in enumerate(subgroup_stds):
+        if std > UCL or std < LCL:
+            results.append(f"Test 1: Subgroup {i+1} has a point more than 3 standard deviations from the center line")
+
+    # Test 2: Nine points in a row on the same side of the center line
+    consecutive_count = 0
+    for std in subgroup_stds:
+        if std > Sbar or std < Sbar:
+            consecutive_count += 1
+            if consecutive_count >= 9:
+                results.append("Test 2: Nine points in a row on the same side of the center line")
+        else:
+            consecutive_count = 0
+
+    # Test 3: Six points in a row, all increasing or all decreasing
+    increasing_count = 0
+    decreasing_count = 0
+    for i in range(len(subgroup_stds)):
+        if i > 0:
+            if subgroup_stds[i] > subgroup_stds[i-1]:
+                increasing_count += 1
+                decreasing_count = 0
+            elif subgroup_stds[i] < subgroup_stds[i-1]:
+                decreasing_count += 1
+                increasing_count = 0
+            else:
+                increasing_count = 0
+                decreasing_count = 0
+
+            if increasing_count >= 6:
+                results.append("Test 3: Six points in a row, all increasing")
+            elif decreasing_count >= 6:
+                results.append("Test 3: Six points in a row, all decreasing")
+
+    # Test 4: Fourteen points in a row, alternating up and down
+    alternating_count = 0
+    for i in range(len(subgroup_stds)):
+        if i > 0:
+            if (subgroup_stds[i] > subgroup_stds[i-1] and i % 2 == 0) or \
+               (subgroup_stds[i] < subgroup_stds[i-1] and i % 2 != 0):
+                alternating_count += 1
+            else:
+                alternating_count = 0
+
+            if alternating_count >= 14:
+                results.append("Test 4: Fourteen points in a row, alternating up and down")
+
+    # Test 5: Two out of three points more than 2 standard deviations from center line (same side)
+    consecutive_count = 0
+    for i, std in enumerate(subgroup_stds):
+        if std > UCL or std < LCL:
+            consecutive_count += 1
+            if consecutive_count >= 2 and i < len(subgroup_stds) - 1:
+                if subgroup_stds[i+1] > UCL or subgroup_stds[i+1] < LCL:
+                    results.append(f"Test 5: Subgroup {i+1} and Subgroup {i+2} have two out of three points more than 2 standard deviations from the center line")
+            elif i < len(subgroup_stds) - 1:
+                if (subgroup_stds[i+1] > UCL or subgroup_stds[i+1] < LCL) and \
+                   (subgroup_stds[i+2] > UCL or subgroup_stds[i+2] < LCL):
+                    results.append(f"Test 5: Subgroup {i+2} and Subgroup {i+3} have two out of three points more than 2 standard deviations from the center line")
+        else:
+            consecutive_count = 0
+
+    # Test 6: Four out of five points more than 1 standard deviation from center line (same side)
+    consecutive_count = 0
+    for i, std in enumerate(subgroup_stds):
+        if std > UCL or std < LCL:
+            consecutive_count += 1
+            if consecutive_count >= 4 and i < len(subgroup_stds) - 1:
+                if subgroup_stds[i+1] > UCL or subgroup_stds[i+1] < LCL:
+                    results.append(f"Test 6: Subgroup {i+1} to Subgroup {i+4} have four out of five points more than 1 standard deviation from the center line")
+        else:
+            consecutive_count = 0
+
+    # Test 7: Fifteen points in a row within 1 standard deviation of center line (either side)
+    consecutive_count = 0
+    for i, std in enumerate(subgroup_stds):
+        if abs(std - Sbar) <= Sbar:
+            consecutive_count += 1
+            if consecutive_count >= 15:
+                results.append("Test 7: Fifteen points in a row within 1 standard deviation of the center line (either side)")
+        else:
+            consecutive_count = 0
+
+    # Test 8: Eight points in a row more than 1 standard deviation from center line (either side)
+    consecutive_count = 0
+    for i, std in enumerate(subgroup_stds):
+        if std > UCL or std < LCL:
+            consecutive_count += 1
+            if consecutive_count >= 8:
+                results.append("Test 8: Eight points in a row more than 1 standard deviation from the center line (either side)")
+        else:
+            consecutive_count = 0
+
+    return results
+
+col_index=1
+subgroup_size = 9
+
 plot_hist(col_index=col_index)
-plot_r_chart(col_index=col_index, subgroup_size=subgroup_size)
+plot_i_chart(col_index=col_index)
