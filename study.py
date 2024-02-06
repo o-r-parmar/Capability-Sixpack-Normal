@@ -312,7 +312,5 @@ def interpret_s_chart(subgroup_stds, Sbar, UCL, LCL):
     return results
 
 col_index=1
-subgroup_size = 9
 
 plot_hist(col_index=col_index)
-plot_i_chart(col_index=col_index)
