@@ -8,12 +8,6 @@ import scipy.stats as stats
 file_path = 'Data.xlsx'
 sheet_name = 'Sheet1'
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-from scipy import stats
-import pandas as pd
-
 def plot_hist(file_path, sheet_name, col_index=None):
     # Read the specified Excel file and sheet
     df = pd.read_excel(file_path, sheet_name=sheet_name)
@@ -31,7 +25,7 @@ def plot_hist(file_path, sheet_name, col_index=None):
     n_value = len(data)  # Number of observations
 
     # Create figure and subplots
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'width_ratios': [3, 1]})
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
     # Plot histogram in the first subplot
     n, bins, patches = ax1.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
@@ -43,32 +37,33 @@ def plot_hist(file_path, sheet_name, col_index=None):
     lsl = mean - 3*overall_std
     usl = mean + 3*overall_std
     margin = 0.2 * (usl - lsl)  # Margin to ensure some space before and after LSL and USL lines
+    #plot LSL USL
     ax1.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
     ax1.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
+    
+    # Adjust ax1 view limits
+    ax1.set_xlim([lsl - margin, usl + margin])
+
+    #plot normalized curve
     x = np.linspace(lsl, usl, 200)
     scaling_factor = max(n) / stats.norm.pdf(mean, mean, overall_std)
     p_overall = stats.norm.pdf(x, mean, overall_std) * scaling_factor
     ax1.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
     ax1.legend(loc='upper right')
 
-    # Adjust ax1 view limits
-    ax1.set_xlim([lsl - margin, usl + margin])
-
     # Create table in the second subplot
-    cell_text = [[f"{mean:.5f}"], [f"{overall_std:.5f}"], [f"{n_value}"]]
+    cell_text = [[f"{mean:.2f}"], [f"{overall_std:.2f}"], [f"{n_value}"]]
     row_labels = ['Mean', 'Std Dev', 'N']
     ax2.axis('off')  # Hide axis for the table
     table = ax2.table(cellText=cell_text,
                       rowLabels=row_labels,
-                      cellLoc='center', loc='center',)
-    table.auto_set_font_size(False)
-    table.set_fontsize(18)
-    table.scale(1, 2)
+                      bbox=[0.25,0.7,0.5,0.3])
 
     for key, cell in table.get_celld().items():
         cell.get_text().set_fontproperties(font_manager.FontProperties(family='Cambria', size=12))
 
     # Adjust layout to ensure no overlap
+        
     plt.tight_layout()
 
     # Display the plot and table
