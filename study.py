@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as font_manager
 import numpy as np
 from PIL import Image
 import scipy.stats as stats
@@ -7,7 +8,13 @@ import scipy.stats as stats
 file_path = 'Data.xlsx'
 sheet_name = 'Sheet1'
 
-def plot_hist(file_path=file_path, sheet_name=sheet_name, col_index=None):
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from scipy import stats
+import pandas as pd
+
+def plot_hist(file_path, sheet_name, col_index=None):
     # Read the specified Excel file and sheet
     df = pd.read_excel(file_path, sheet_name=sheet_name)
     
@@ -21,32 +28,52 @@ def plot_hist(file_path=file_path, sheet_name=sheet_name, col_index=None):
     # Calculate statistics
     mean = np.mean(data)
     overall_std = np.std(data, ddof=1)
+    n_value = len(data)  # Number of observations
 
-    # Plot histogram
-    plt.figure(figsize=(12, 6))
-    n, bins, patches = plt.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
+    # Create figure and subplots
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6), gridspec_kw={'width_ratios': [3, 1]})
 
-    max_freq = max(n)
-    scaling_factor = max_freq / stats.norm.pdf(mean, mean, overall_std)
+    # Plot histogram in the first subplot
+    n, bins, patches = ax1.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
+    ax1.set_xlabel('Hist Avg')
+    ax1.set_ylabel('Frequency')
+    ax1.set_title('Capability Histogram')
 
+    # Calculate and plot LSL, USL, and normal curve on ax1
     lsl = mean - 3*overall_std
     usl = mean + 3*overall_std
-
-    # Plot overall normal curve
+    margin = 0.2 * (usl - lsl)  # Margin to ensure some space before and after LSL and USL lines
+    ax1.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
+    ax1.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
     x = np.linspace(lsl, usl, 200)
+    scaling_factor = max(n) / stats.norm.pdf(mean, mean, overall_std)
     p_overall = stats.norm.pdf(x, mean, overall_std) * scaling_factor
-    plt.plot(x, p_overall, 'k', linewidth=2, label='Overall STD', color='r')
+    ax1.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
+    ax1.legend(loc='upper right')
 
-    # Add labels and title
-    plt.xlabel('Hist Avg')
-    plt.ylabel('Frequency')
-    plt.title('Capability Histogram')
+    # Adjust ax1 view limits
+    ax1.set_xlim([lsl - margin, usl + margin])
 
-    # Add legend
-    plt.legend(loc='upper right')
+    # Create table in the second subplot
+    cell_text = [[f"{mean:.5f}"], [f"{overall_std:.5f}"], [f"{n_value}"]]
+    row_labels = ['Mean', 'Std Dev', 'N']
+    ax2.axis('off')  # Hide axis for the table
+    table = ax2.table(cellText=cell_text,
+                      rowLabels=row_labels,
+                      cellLoc='center', loc='center',)
+    table.auto_set_font_size(False)
+    table.set_fontsize(18)
+    table.scale(1, 2)
 
-    # Display the plot
+    for key, cell in table.get_celld().items():
+        cell.get_text().set_fontproperties(font_manager.FontProperties(family='Cambria', size=12))
+
+    # Adjust layout to ensure no overlap
+    plt.tight_layout()
+
+    # Display the plot and table
     plt.show()
-
-col_index=4
-plot_hist(col_index=col_index)
+    
+plot_hist(file_path, sheet_name, col_index=3)
+# plot_hist(file_path, sheet_name, col_index=4)
+# plot_hist(file_path, sheet_name, col_index=5)
