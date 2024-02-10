@@ -70,5 +70,5 @@ def plot_hist(file_path, sheet_name, col_index=None):
     plt.show()
     
 plot_hist(file_path, sheet_name, col_index=3)
-# plot_hist(file_path, sheet_name, col_index=4)
-# plot_hist(file_path, sheet_name, col_index=5)
+plot_hist(file_path, sheet_name, col_index=4)
+plot_hist(file_path, sheet_name, col_index=5)
