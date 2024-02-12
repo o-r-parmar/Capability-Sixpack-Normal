@@ -73,5 +73,5 @@ def i_chart(filename, sheet_name, col_index, sub_group=1):
 # Example usage:
 filename = "Data.xlsx"  # Replace with your actual file path
 sheet_name = "Sheet1"  # Replace with the correct sheet name if needed
-cl_index = 4  # Adjust the CL index based on your data structure
-i_chart(filename, sheet_name, cl_index)
+col_index = 4  # Adjust the CL index based on your data structure
+i_chart(filename, sheet_name, col_index)
