@@ -3,11 +3,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-import pandas as pd
-import numpy as np
-import scipy.stats as stats
-import matplotlib.pyplot as plt
-
 def normal_probability_plot(file_name, sheet_name, col_index):
     """
     Generates a normal probability plot, including approximate confidence bounds, and performs

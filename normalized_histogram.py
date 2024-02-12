@@ -1,6 +1,5 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager
 import numpy as np
 import scipy.stats as stats
 
@@ -57,9 +56,6 @@ def plot_hist(file_path, sheet_name, col_index=None):
     table = ax2.table(cellText=cell_text,
                       rowLabels=row_labels,
                       bbox=[0.25,0.7,0.5,0.3])
-
-    # for key, cell in table.get_celld().items():
-    #     cell.get_text().set_fontproperties(font_manager.FontProperties(family='Cambria', size=12))
 
     # Adjust layout to ensure no overlap
         
