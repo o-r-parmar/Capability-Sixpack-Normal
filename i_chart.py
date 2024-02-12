@@ -1,8 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager
 import numpy as np
-import scipy.stats as stats
 
 file_path = 'Data.xlsx'
 sheet_name = 'Sheet1'
@@ -34,14 +32,14 @@ def i_chart(filename, sheet_name, col_index, sub_group=1):
     std = np.std(data)
 
     # Calculate control limits
-    upper_cl = mean + 3 * std
-    lower_cl = mean - 3 * std
+    ucl = mean + 3 * std
+    lcl = mean - 3 * std
 
     plt.figure(figsize=(12, 6))
 
     # Plot individual data points
     for i, value in enumerate(data):
-        color = 'red' if (value < lower_cl or value > upper_cl) else 'blue'
+        color = 'red' if (value < lcl or value > ucl) else 'blue'
         plt.plot(i, value, 'o', markersize=5, color=color)
 
     # Plot lines
@@ -49,8 +47,8 @@ def i_chart(filename, sheet_name, col_index, sub_group=1):
 
     # Plot center line and control limits
     plt.axhline(y=mean, color='g', linestyle='-', label='Mean Line')
-    plt.axhline(y=upper_cl, color='r', linestyle='--', label='Upper Control Limit')
-    plt.axhline(y=lower_cl, color='r', linestyle='--', label='Lower Control Limit')
+    plt.axhline(y=ucl, color='r', linestyle='--', label='Upper Control Limit')
+    plt.axhline(y=lcl, color='r', linestyle='--', label='Lower Control Limit')
 
     # Determine plot limits with margins
     y_min, y_max = plt.ylim()  # Get current Y-axis limits
