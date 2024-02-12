@@ -3,11 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import scipy.stats as stats
-
 def plot_hist(file_path, sheet_name, col_index=None):
     # Read the specified Excel file and sheet
     df = pd.read_excel(file_path, sheet_name=sheet_name)
@@ -27,7 +22,7 @@ def plot_hist(file_path, sheet_name, col_index=None):
     fig, ax = plt.subplots(figsize=(12, 6))  # Adjusted to a single plot
 
     # Plot histogram
-    n, bins, patches = ax.hist(data, bins=9, color='#7DA7D9', edgecolor='#0000FF', alpha=0.7)
+    n, bins, patches = ax.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
     ax.set_xlabel('Hist Avg')
     ax.set_ylabel('Frequency')
     ax.set_title('Capability Histogram')
@@ -51,8 +46,7 @@ def plot_hist(file_path, sheet_name, col_index=None):
     ax.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
     ax.legend(loc='upper right')
 
-    # Display the plot
-    plt.show()
+    return ax, fig
 
 def i_chart(filename, sheet_name, col_index, sub_group=1):
     """
