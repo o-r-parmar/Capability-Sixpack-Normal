@@ -7,14 +7,6 @@ import scipy.stats as stats
 file_path = 'Data.xlsx'
 sheet_name = 'Sheet1'
 
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-
 def i_chart(filename, sheet_name, col_index, sub_group=1):
     """
     Generates an I chart with out-of-control points highlighted in red. Adds a margin for LSL and USL 
