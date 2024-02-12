@@ -247,12 +247,8 @@ col_index = [3,4,5]
 
 for i in col_index:
     plot_hist(filename, sheet_name, col_index=i)
-    print(i)
     i_chart(filename, sheet_name, col_index=i)
-    print(i)
     mr_chart(filename, sheet_name, col_index=i)
-    print(i)
     normal_probability_plot(filename, sheet_name, col_index=i)
-    print(i)
 
 
