@@ -3,6 +3,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.stats as stats
+
 def plot_hist(file_path, sheet_name, col_index=None):
     # Read the specified Excel file and sheet
     df = pd.read_excel(file_path, sheet_name=sheet_name)
@@ -17,48 +22,36 @@ def plot_hist(file_path, sheet_name, col_index=None):
     # Calculate statistics
     mean = np.mean(data)
     overall_std = np.std(data, ddof=1)
-    n_value = len(data)  # Number of observations
+    
+    # Create figure and axes
+    fig, ax = plt.subplots(figsize=(12, 6))  # Adjusted to a single plot
 
-    # Create figure and subplots
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    # Plot histogram
+    n, bins, patches = ax.hist(data, bins=9, color='#7DA7D9', edgecolor='#0000FF', alpha=0.7)
+    ax.set_xlabel('Hist Avg')
+    ax.set_ylabel('Frequency')
+    ax.set_title('Capability Histogram')
 
-    # Plot histogram in the first subplot
-    n, bins, patches = ax1.hist(data, bins=9, color='#7DA7D9', edgecolor='#0000FF', alpha=0.7)
-    ax1.set_xlabel('Hist Avg')
-    ax1.set_ylabel('Frequency')
-    ax1.set_title('Capability Histogram')
-
-    # Calculate and plot LSL, USL, and normal curve on ax1
+    # Calculate and plot LSL, USL, and normal curve on the histogram
     lsl = mean - 3*overall_std
     usl = mean + 3*overall_std
     margin = 0.2 * (usl - lsl)  # Margin to ensure some space before and after LSL and USL lines
-    #plot LSL USL
-    ax1.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
-    ax1.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
-    
-    # Adjust ax1 view limits
-    ax1.set_xlim([lsl - margin, usl + margin])
 
-    #plot normalized curve
+    # Plot LSL and USL
+    ax.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
+    ax.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
+    
+    # Adjust view limits
+    ax.set_xlim([lsl - margin, usl + margin])
+
+    # Plot normalized curve
     x = np.linspace(lsl, usl, 200)
     scaling_factor = max(n) / stats.norm.pdf(mean, mean, overall_std)
     p_overall = stats.norm.pdf(x, mean, overall_std) * scaling_factor
-    ax1.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
-    ax1.legend(loc='upper right')
+    ax.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
+    ax.legend(loc='upper right')
 
-    # # Create table in the second subplot
-    # cell_text = [[f"{mean:.2f}"], [f"{overall_std:.2f}"], [f"{n_value}"]]
-    # row_labels = ['Mean', 'Std Dev', 'N']
-    # ax2.axis('off')  # Hide axis for the table
-    # table = ax2.table(cellText=cell_text,
-    #                   rowLabels=row_labels,
-    #                   bbox=[0.25,0.7,0.5,0.3])
-
-    # Adjust layout to ensure no overlap
-        
-    plt.tight_layout()
-
-    # Display the plot and table
+    # Display the plot
     plt.show()
 
 def i_chart(filename, sheet_name, col_index, sub_group=1):
@@ -212,7 +205,7 @@ def normal_probability_plot(file_name, sheet_name, col_index):
     ad_stat, critical_values, p_value = stats.anderson(data_sorted, dist='norm')
 
     # Plot the actual data quantiles vs. theoretical quantiles
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(12, 6))
     plt.plot(theoretical_quantiles, actual_quantiles, 'o', label='Data Points')
 
     # Plot the expected line (45-degree line)
