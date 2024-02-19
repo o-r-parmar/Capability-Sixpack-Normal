@@ -2,14 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
+import os
 
 def plot_hist(file_path, sheet_name, col_index=None):
-    # Read the specified Excel file and sheet
-    df = pd.read_excel(file_path, sheet_name=sheet_name)
-    
-    # Verify column index is provided
+    # Check for column index
     if col_index is None:
         raise ValueError("Column index must be provided")
+    
+    # Read the specified Excel file and sheet
+    df = pd.read_excel(file_path, sheet_name=sheet_name)
     
     # Access column by index and drop NA values
     data = df.iloc[:, col_index].dropna().values
@@ -18,35 +19,38 @@ def plot_hist(file_path, sheet_name, col_index=None):
     mean = np.mean(data)
     overall_std = np.std(data, ddof=1)
     
-    # Create figure and axes
-    fig, ax = plt.subplots(figsize=(12, 6))  # Adjusted to a single plot
-
-    # Plot histogram
-    n, bins, patches = ax.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
-    ax.set_xlabel('Hist Avg')
-    ax.set_ylabel('Frequency')
-    ax.set_title('Capability Histogram')
+    # Setup histogram plotting
+    plt.figure(figsize=(12, 6))
+    n, bins, patches = plt.hist(data, bins=9, color='#7DA7D9', edgecolor='black', alpha=0.7)
+    plt.xlabel('Hist Avg')
+    plt.ylabel(df.columns[col_index])
+    plt.title('Capability Histogram')
 
     # Calculate and plot LSL, USL, and normal curve on the histogram
     lsl = mean - 3*overall_std
     usl = mean + 3*overall_std
     margin = 0.2 * (usl - lsl)  # Margin to ensure some space before and after LSL and USL lines
 
-    # Plot LSL and USL
-    ax.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
-    ax.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
+    # Plot LSL and USL lines
+    plt.axvline(x=lsl, color='r', linestyle='--', linewidth=2, label='LSL')
+    plt.axvline(x=usl, color='r', linestyle='--', linewidth=2, label='USL')
     
     # Adjust view limits
-    ax.set_xlim([lsl - margin, usl + margin])
+    plt.xlim([lsl - margin, usl + margin])
 
     # Plot normalized curve
     x = np.linspace(lsl, usl, 200)
     scaling_factor = max(n) / stats.norm.pdf(mean, mean, overall_std)
     p_overall = stats.norm.pdf(x, mean, overall_std) * scaling_factor
-    ax.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
-    ax.legend(loc='upper right')
+    plt.plot(x, p_overall, 'r', linewidth=2, label='Overall STD')
+    plt.legend(loc='upper right')
 
-    return ax, fig
+    images_dir = "images"
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
+    # Save the figure
+    plt.savefig(f"{images_dir}/histogram_plot_{col_index}.png", dpi=1200)
 
 def i_chart(filename, sheet_name, col_index, sub_group=1):
     """
@@ -108,8 +112,12 @@ def i_chart(filename, sheet_name, col_index, sub_group=1):
     # Add legend
     plt.legend()
 
+    images_dir = "images"
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
     # Show the plot
-    plt.show()
+    plt.savefig(f"{images_dir}/i_chart_{col_index}.png", dpi=1200)
 
 def mr_chart(filename, sheet_name, col_index, sub_group=1):
     """
@@ -164,14 +172,18 @@ def mr_chart(filename, sheet_name, col_index, sub_group=1):
 
     # Set labels and title
     plt.xlabel('#Observation')
-    plt.ylabel('Moving Range')
+    plt.ylabel(df.columns[col_index])
     plt.title('MR Chart with Out-of-Control Points Highlighted')
 
     # Add legend
     plt.legend()
 
+    images_dir = "images"
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
     # Show the plot
-    plt.show()
+    plt.savefig(f"{images_dir}/mr_chart_{col_index}.png", dpi=1200)
 
 def normal_probability_plot(file_name, sheet_name, col_index):
     """
@@ -214,7 +226,7 @@ def normal_probability_plot(file_name, sheet_name, col_index):
 
     # Add labels and title
     plt.xlabel('Theoretical Quantiles')
-    plt.ylabel('Ordered Values')
+    plt.ylabel(df.columns[col_index])
     plt.title('Normal Probability Plot with Approximate Confidence Bounds')
     plt.legend()
 
@@ -225,12 +237,16 @@ def normal_probability_plot(file_name, sheet_name, col_index):
     # Adjust layout to make room for the figtext
     plt.subplots_adjust(bottom=0.15)
 
+    images_dir = "images"
+    if not os.path.exists(images_dir):
+        os.makedirs(images_dir)
+
     # Show the plot
-    plt.show()
+    plt.savefig(f"{images_dir}/normal_probability_plot_{col_index}.png", dpi=1200)
 
 filename = "Data.xlsx"
 sheet_name = "Sheet1"
-col_index = [3,4,5]
+col_index = [3, 4, 5]
 
 for i in col_index:
     plot_hist(filename, sheet_name, col_index=i)
@@ -238,4 +254,4 @@ for i in col_index:
     mr_chart(filename, sheet_name, col_index=i)
     normal_probability_plot(filename, sheet_name, col_index=i)
 
-
+print("Images Generated: Check the images folder")
