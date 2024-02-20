@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats as stats
 import os
+import sys
 
 def plot_hist(file_path, sheet_name, col_index=None):
     '''
@@ -233,6 +234,11 @@ class ExcelColumnApp:
 
         self.column_vars = {}
 
+    def exit_app(self):
+        for var in self.column_vars.values():
+            var.set(False)
+        sys.exit()
+    
     def browse_file(self):
         file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx *.xls")])
         self.path_entry.delete(0, tk.END)
@@ -253,7 +259,6 @@ class ExcelColumnApp:
             messagebox.showerror("Error", f"Failed to load Excel file: {e}")
 
     def generate_plots(self):
-        self.root.destroy()  # Close the GUI window immediately when "Done" is pressed
         selected_columns = [col for col, var in self.column_vars.items() if var.get()]
         file_path = self.path_entry.get()
         sheet_name = 'Sheet1'  # Assuming default sheet name or prompt user to enter/select
@@ -267,14 +272,15 @@ class ExcelColumnApp:
                 i_chart(file_path, sheet_name, col_index)
                 mr_chart(file_path, sheet_name, col_index)
                 normal_probability_plot(file_path, sheet_name, col_index)
-            print("Success: Plots generated for selected columns.")
+            messagebox.showinfo("Success", "Plots generated for selected columns.")
+            if messagebox.askyesno("Exit", "Do you want to exit the application?"):
+                self.exit_app()
 
 if __name__ == "__main__":
     root = tk.Tk()
     app = ExcelColumnApp(root)
     def on_closing():
-        root.destroy()
+        app.exit_app()
     
     root.protocol("WM_DELETE_WINDOW", on_closing)
-
     root.mainloop()
