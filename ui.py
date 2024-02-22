@@ -211,12 +211,15 @@ def normal_probability_plot(file_name, sheet_name, col_index):
 
 def calculate_cp_cpk(data, usl, lsl, toler=6):
     mean = data.mean()
-    std_dev = data.std(ddof=0)  # ddof=0 for population standard deviation
+    std_dev = data.std(ddof=0)
     cp = (usl - lsl) / (toler * std_dev)
     cpu = (usl - mean) / (3 * std_dev)
     cpl = (mean - lsl) / (3 * std_dev)
     cpk = min(cpu, cpl)
+    print(mean, std_dev)
+    print(cp, cpk)
     return round(cp, 3), round(cpk, 3)
+
 class ExcelColumnApp:
     def __init__(self, root):
         self.root = root
@@ -250,6 +253,7 @@ class ExcelColumnApp:
         self.column_vars = {}
 
     def exit_app(self):
+        self.root.destroy()
         for var in self.column_vars.values():
             var.set(False)
         sys.exit()
@@ -307,35 +311,67 @@ class ExcelColumnApp:
     def calculate_and_save_cp_cpk(self, data, usl, lsl, col_name):
         cp, cpk = calculate_cp_cpk(data, usl, lsl)
         print(f"Cp and Cpk for column '{col_name}': {cp}, {cpk}")
+        self.show_results_dialog(cp, cpk, col_name)
+
+    def show_results_dialog(self, cp, cpk, col_names, current_index):
+        """
+        Shows a dialog with the Cp and Cpk results and navigational buttons.
+        """
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Cp and Cpk Results")
+        dialog.geometry("400x150")
+
+        col_name = col_names[current_index]
+
+        tk.Label(dialog, text=f"Results for column '{col_name}':").pack(pady=(10, 5))
+        tk.Label(dialog, text=f"Cp: {cp}").pack()
+        tk.Label(dialog, text=f"Cpk: {cpk}").pack(pady=5)
+
+        # Function to handle the "Next" or "Exit" action
+        def next_or_exit():
+            dialog.destroy()  # Close the current dialog
+            if current_index + 1 < len(col_names):  # Check if there are more columns to process
+                self.process_column(col_names, current_index + 1)
+            else:
+                self.exit_app()  # No more columns, exit the application
+
+        # Determine button text based on whether there are more columns to process
+        button_text = "Next" if current_index + 1 < len(col_names) else "Exit"
+        action_button = tk.Button(dialog, text=button_text, command=next_or_exit)
+        action_button.pack(pady=(5, 10))
+
+        dialog.transient(self.root)
+        dialog.grab_set()
+        self.root.wait_window(dialog)
+
+    def process_column(self, col_names, current_index):
+        file_path = self.path_entry.get()
+        sheet_name = 'Sheet1'
+        df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+        col_name = col_names[current_index]
+        try:
+            lsl = float(self.lsl_entries[col_name].get())
+            usl = float(self.usl_entries[col_name].get())
+            if usl <= lsl:
+                messagebox.showerror("Error", f"USL must be greater than LSL for column {col_name}.")
+                return
+        except ValueError:
+            messagebox.showerror("Error", f"Invalid LSL or USL entered for column {col_name}.")
+            return
+        
+        col_index = df.columns.get_loc(col_name)
+        data = df.iloc[:, col_index].dropna()
+        cp, cpk = calculate_cp_cpk(data, usl, lsl)
+        self.show_results_dialog(cp, cpk, col_names, current_index)
 
     def generate_plots(self):
         selected_columns = [col for col, var in self.column_vars.items() if var.get()]
-        file_path = self.path_entry.get()
-        sheet_name = 'Sheet1'  # Assuming the sheet name is 'Sheet1'; adjust as necessary
-        
         if not selected_columns:
             messagebox.showinfo("Info", "No columns selected.")
             return
-
-        df = pd.read_excel(file_path, sheet_name=sheet_name)
-
-        for col_name in selected_columns:
-            try:
-                lsl = float(self.lsl_entries[col_name].get())
-                usl = float(self.usl_entries[col_name].get())
-                # Additional validation for USL > LSL can be done here
-                if usl <= lsl:
-                    messagebox.showerror("Error", f"USL must be greater than LSL for column {col_name}.")
-                    continue  # Skip this column and proceed to the next
-            except ValueError:
-                messagebox.showerror("Error", f"Invalid LSL or USL entered for column {col_name}.")
-                continue  # Skip this column and proceed to the next
-            
-            col_index = df.columns.get_loc(col_name)
-            data = df.iloc[:, col_index].dropna()  # Extract and clean data for the selected column
-            self.calculate_and_save_cp_cpk(data, usl, lsl, col_name)  # Pass data along with USL and LSL
-    
-        messagebox.showinfo("Success", "Plots generated and Cp, Cpk values saved successfully!")
+        # Start processing with the first selected column
+        self.process_column(selected_columns, 0)
 
     def validate_numeric_input(self, input_str):
         if input_str == "":
